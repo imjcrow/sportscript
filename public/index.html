@@ -94,6 +94,19 @@ p { margin: 0; }
 .alert { background: var(--dog-soft); }
 .alert h3 { display: flex; align-items: center; gap: 8px; font-size: 19px; }
 .alert h3 svg { color: var(--dog); }
+.start { background: var(--fav-soft); }
+.start h3 { font-size: 19px; }
+.steps { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; counter-reset: s; }
+.steps li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: start; counter-increment: s; }
+.steps li::before { content: counter(s); width: 28px; height: 28px; border-radius: 50%; background: var(--fav); color: var(--on-fav); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+.startrow { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { min-height: 44px; padding: 0 16px; border: 0; border-radius: var(--pill); font-weight: 700; cursor: pointer; background: var(--fav); color: var(--on-fav); }
+.btn.ghost { background: var(--card); color: var(--ink); }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.gloss { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.gloss div { border-top: 1px solid var(--rule); padding-top: 10px; }
+.gloss div:first-child { border-top: 0; padding-top: 0; }
 .mlp { font-weight: 500; opacity: .85; padding-left: 8px; margin-left: 2px; border-left: 1px solid currentColor; }
 .where { display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 1px; }
 .wxs { font-size: 12px; white-space: nowrap; }
@@ -230,7 +243,7 @@ nav.tabs button[aria-current="page"] { background: var(--fav-soft); color: var(-
 <nav class="tabs" aria-label="Sections">
   <button type="button" data-tab="games"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="4"/><path d="M12 4v16"/></svg>Games</button>
   <button type="button" data-tab="ratings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Market ratings</button>
-  <button type="button" data-tab="how"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>How to read</button>
+  <button type="button" data-tab="how"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>How to use</button>
 </nav>
 
 <script>
@@ -280,6 +293,12 @@ function topBar() { const dk = isDark(); return `<div class="brand"><span class=
 function viewGames() {
   let out = topBar() + `<header style="display:flex;flex-direction:column;gap:10px"><h1>Sports made simple.</h1>
     <p class="lede">We don't pick games. We <b>decode what the spread is telling you</b>: what Vegas expects, why the number sits where it does, and what has to happen for <b>each side</b> to cash.</p></header>`;
+  if (!hideStart()) out += `<section class="card start"><h3>New here? Start in 30 seconds</h3><ol class="steps">
+    <li><span><b>Pick a game below.</b> The big numbers are the score Vegas expects, not our prediction.</span></li>
+    <li><span><b>Check the top of the game page.</b> Key injuries, the moneyline and the weather tell you what could move the line.</span></li>
+    <li><span><b>Scroll to "How each side cashes."</b> It shows what has to happen for the favorite to cover and what has to happen for the underdog. Decide which story you believe.</span></li>
+  </ol><div class="legend"><span><span class="dot fav"></span>Blue = favorite</span><span><span class="dot dog"></span>Orange = underdog</span></div>
+  <div class="startrow"><button type="button" class="btn" data-goto-how>Learn the basics</button><button type="button" class="btn ghost" data-hide-start>Got it, hide this</button></div></section>`;
   const wks = [...new Set([...Object.keys(D.weeks || {}).map(Number), D.week])].sort((x, y) => x - y);
   out += `<div class="wkbar" role="group" aria-label="Pick a week">${wks.map(w => `<button type="button" data-wk="${w}" aria-pressed="${w === st.wk}">Week ${w}${w === D.week ? "<small>this week</small>" : ""}</button>`).join("")}</div>`;
   if (st.wk !== D.week) return out + otherWeek(st.wk) + foot();
@@ -449,9 +468,27 @@ function viewRatings() {
 }
 
 /* ---------- how to read ---------- */
+function hideStart() { try { return localStorage.getItem("ss-hide-start") === "1" || st.hideStart; } catch (e) { return !!st.hideStart; } }
 function viewHow() {
   const K = D.keynum;
-  return topBar() + `<header style="display:flex;flex-direction:column;gap:10px"><h1>How to read a line.</h1><p class="lede">Sportsbooks set lines to split the betting, using the best information in the world. The line is the market's forecast. Our job is to translate it.</p></header>
+  return topBar() + `<header style="display:flex;flex-direction:column;gap:10px"><h1>How to use SportScript.</h1><p class="lede">Sportsbooks set lines using the best information in the world. The line is the market's forecast. <b>We translate it into plain English</b>, so you can decide which side's story you believe.</p></header>
+  <section class="card sec start"><h3>Reading a game page, top to bottom</h3><ol class="steps">
+    <li><span><b>The score up top</b> is what the betting line implies, for example Ravens 21.2, Browns 18.2. Blue is the favorite, orange is the underdog.</span></li>
+    <li><span><b>Key injuries to watch</b> appears when a team's quarterback, lead running back or top receiver is hurt. This is the most common reason a line moves.</span></li>
+    <li><span><b>Moneyline and weather</b> show what a $100 bet pays to win outright, each team's real win chance, and the kickoff forecast.</span></li>
+    <li><span><b>Sections 1–3, what the line says and why:</b> Home field taken out, and whether this season's stats agree with the line.</span></li>
+    <li><span><b>Section 4, the matchups:</b> Each offense against the other team's defense, ranked 1st (best) to 32nd.</span></li>
+    <li><span><b>Sections 5–7, how the game plays out and how each side cashes:</b> This is the heart of it: what has to happen for each bet to win.</span></li>
+    <li><span><b>Sections 8–10, injuries, head-to-head and trends:</b> Background to check before you decide.</span></li>
+  </ol><p class="note">Use the week buttons on the Games tab to see past results or next week's early lines.</p></section>
+  <section class="card sec"><h3>Quick glossary</h3><div class="gloss">
+    <div><b>Cover:</b> win the bet against the spread. The favorite covers by winning by more than the spread; the underdog covers by winning, or losing by less.</div>
+    <div><b>ATS (against the spread):</b> a team's record at covering. 3-2 ATS means they covered 3 of 5.</div>
+    <div><b>Push:</b> the result lands exactly on the number, and your bet is refunded.</div>
+    <div><b>Moneyline:</b> a bet on who wins, no spread. −150 means bet $150 to win $100; +130 means bet $100 to win $130.</div>
+    <div><b>Over/under (total):</b> a bet on whether both teams combined score more or less than the number.</div>
+    <div><b>Line movement:</b> the spread or total changing during the week, usually because of injuries, weather or heavy betting on one side.</div>
+  </div></section>
   <section class="card sec"><h3>The spread</h3><p>The favorite gives points, the underdog gets them. <b>Chiefs −7.5</b> means Kansas City has to win by 8 or more. <b>Chargers +7.5</b> wins if Los Angeles wins or loses by 7 or fewer. A whole-number spread can push: win by exactly that number and the bet is refunded.</p></section>
   <section class="card sec"><h3>The total and the implied score</h3><p>The total is the combined points. Put the spread and total together and you get the score the market expects: favorite = (total + spread) ÷ 2, underdog = (total − spread) ÷ 2. A 47.5 total with a 3.5 spread works out to about 25.5 to 22.</p></section>
   <section class="card sec"><h3>Home field</h3><p>Home field is worth about <b>${f1(D.hfa)}</b> points in this season's lines, less than the classic 3. A road favorite of 5 is about ${f1(5 + D.hfa)} better on a neutral field and would be about ${f1(5 + 2 * D.hfa)} at home.</p></section>
@@ -470,6 +507,8 @@ function render() {
 function go(fn) { fn(); render(); window.scrollTo(0, 0); }
 app.addEventListener("click", ev => {
   const t = ev.target.closest("button"); if (!t) return;
+  if (t.hasAttribute("data-hide-start")) { st.hideStart = true; try { localStorage.setItem("ss-hide-start", "1"); } catch (e) {} const y = window.scrollY; render(); window.scrollTo(0, y); return; }
+  if (t.hasAttribute("data-goto-how")) { go(() => { st.tab = "how"; st.game = null; }); return; }
   if (t.hasAttribute("data-theme-toggle")) { const nt = isDark() ? "light" : "dark"; document.documentElement.dataset.theme = nt; try { localStorage.setItem("ss-theme", nt); } catch (e) {} render(); return; }
   if (t.dataset.wk) { st.wk = +t.dataset.wk; const y = window.scrollY; render(); window.scrollTo(0, y); return; }
   if (t.dataset.tt) { const [k, v] = t.dataset.tt.split("|"); st.tt[k] = v; const y = window.scrollY; render(); window.scrollTo(0, y); return; }
